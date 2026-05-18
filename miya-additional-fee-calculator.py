@@ -8,6 +8,51 @@ import math
 import streamlit as st
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# =================== constant ======================
+
+# ===== 箱型价格($) =====
+BIG_BOX_PRICE = 158
+MEDIUM_BOX_PRICE = 138
+SMALL_BOX_PRICE = 98
+
+
+# ===== 箱型对应重量(lbs) =====
+BIG_BOX_WEIGHT_LIMIT = 55
+MEDIUM_BOX_WEIGHT_LIMIT = 45
+SMALL_BOX_WEIGHT_LIMIT = 35
+
+
+# ===== 单边超长阈值(inch) =====
+LONGEST_SIDE_LIMIT = 48
+SECOND_LONGEST_SIDE_LIMIT = 28
+
+
+# ===== girth 阈值 (inch) =====
+# girth = a + 2(b+h)
+OVERSIZE_GIRTH_LIMIT = 130
+GIRTH_SURCHARGE_LIMIT = 95
+
+
+# ===== 超长费用($) =====
+INTERNATIONAL_LONG_FEE = 50
+DOMESTIC_LONG_FEE = 30
+
+
+# ===== Oversize费用($) =====
+OVERSIZE_FEE = 100
+
+
+# ===== 不同物流线路 大箱限重(lbs)  =====
+INTERNATIONAL_WEIGHT_LIMIT = 55
+DOMESTIC_WEIGHT_LIMIT = 50
+
+
+# =====  不同物流线路 超重费率 =====
+INTERNATIONAL_OVERWEIGHT_RATE = 3.6
+INTERNATIONAL_OVERWEIGHT_PENALTY = 30
+
+DOMESTIC_OVERWEIGHT_RATE = 1.5
+DOMESTIC_OVERWEIGHT_PENALTY = 25
 
 
 

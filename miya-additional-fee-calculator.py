@@ -7,6 +7,11 @@
 import math
 import streamlit as st
 
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -50,7 +55,7 @@ def get_international_input():
 
 
 
-# 定义定价函数
+# 定义额外定价函数
 def calculate_extra_fee(length, width, height, is_international, unit):
     
     # 如果是 cm，先换算成 inch
@@ -208,6 +213,58 @@ def calculate_extra_fee(length, width, height, is_international, unit):
 
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
 
+# st.title("口水蛙的额外费用计算器")
+
+# unit = st.radio(
+#     "请选择尺寸单位",
+#     ["inch", "cm"]
+# )
+
+# length = st.number_input(
+#     f"请输入长度（{unit}）",
+#     min_value=0.0,
+#     value=None,
+#     placeholder="长度"
+# )
+
+# width = st.number_input(
+#     f"请输入宽度（{unit}）",
+#     min_value=0.0,
+#     value=None,
+#     placeholder="宽度"
+# )
+
+# height = st.number_input(
+#     f"请输入高度（{unit}）",
+#     min_value=0.0,
+#     value=None,
+#     placeholder="高度"
+# )
+
+
+
+
+
+
+# shipping_type = st.radio(
+#     "是否国际件？",
+#     ["国际", "国内"]
+# )
+
+# is_international = shipping_type == "国际"
+
+# if st.button("计算额外费用"):
+
+#     # st.balloons()
+
+#     calculate_extra_fee(
+#         length,
+#         width,
+#         height,
+#         is_international,
+#         unit
+#     )
+
 st.title("口水蛙的额外费用计算器")
 
 unit = st.radio(
@@ -215,31 +272,24 @@ unit = st.radio(
     ["inch", "cm"]
 )
 
-length = st.number_input(
+# ===== 三维输入 =====
+
+length = st.text_input(
     f"请输入长度（{unit}）",
-    min_value=0.0,
-    value=None,
-    placeholder="请输入长度"
+    placeholder="长度"
 )
 
-width = st.number_input(
+width = st.text_input(
     f"请输入宽度（{unit}）",
-    min_value=0.0,
-    value=None,
-    placeholder="请输入宽度"
+    placeholder="宽度"
 )
 
-height = st.number_input(
+height = st.text_input(
     f"请输入高度（{unit}）",
-    min_value=0.0,
-    value=None,
-    placeholder="请输入高度"
+    placeholder="高度"
 )
 
-
-
-
-
+# ===== 国际 / 国内 =====
 
 shipping_type = st.radio(
     "是否国际件？",
@@ -248,17 +298,31 @@ shipping_type = st.radio(
 
 is_international = shipping_type == "国际"
 
+# ===== 按钮 =====
+
 if st.button("计算额外费用"):
 
-    # st.balloons()
+    try:
 
-    calculate_extra_fee(
-        length,
-        width,
-        height,
-        is_international,
-        unit
-    )
+        # 转成 float
+        length = float(length)
+        width = float(width)
+        height = float(height)
+
+        # st.balloons()
+
+        calculate_extra_fee(
+            length,
+            width,
+            height,
+            is_international,
+            unit
+        )
+
+    except:
+        st.error("请输入有效数字")
+
+
 
 
 

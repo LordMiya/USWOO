@@ -215,9 +215,31 @@ unit = st.radio(
     ["inch", "cm"]
 )
 
-length = st.number_input(f"请输入长度（{unit}）", min_value=0.0)
-width = st.number_input(f"请输入宽度（{unit}）", min_value=0.0)
-height = st.number_input(f"请输入高度（{unit}）", min_value=0.0)
+length = st.number_input(
+    f"请输入长度（{unit}）",
+    min_value=0.0,
+    value=None,
+    placeholder="请输入长度"
+)
+
+width = st.number_input(
+    f"请输入宽度（{unit}）",
+    min_value=0.0,
+    value=None,
+    placeholder="请输入宽度"
+)
+
+height = st.number_input(
+    f"请输入高度（{unit}）",
+    min_value=0.0,
+    value=None,
+    placeholder="请输入高度"
+)
+
+
+
+
+
 
 shipping_type = st.radio(
     "是否国际件？",

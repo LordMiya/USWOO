@@ -55,7 +55,7 @@ def get_international_input():
 
 
 
-# 定义额外定价函数
+# ======================================== 定义额外定价函数 ========================================
 def calculate_extra_fee(length, width, height, is_international, unit):
     
     # 如果是 cm，先换算成 inch
@@ -211,6 +211,133 @@ def calculate_extra_fee(length, width, height, is_international, unit):
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+def calculate_large_package_discount_price(length, width, height, is_international, unit):
+
+    if unit == "cm":
+        length = length / 2.54
+        width = width / 2.54
+        height = height / 2.54
+
+    length = math.ceil(length)
+    width = math.ceil(width)
+    height = math.ceil(height)
+
+    dims = sorted([length, width, height], reverse=True)
+    a, b, h = dims
+
+    dim_weight = math.ceil((length * width * height) / 139)
+
+    if is_international:
+        long_fee = INTERNATIONAL_LONG_FEE
+    else:
+        long_fee = DOMESTIC_LONG_FEE
+
+    girth_value = a + 2 * (b + h)
+
+    size_fee = 0
+    size_fee_name = ""
+
+    if girth_value >= OVERSIZE_GIRTH_LIMIT:
+        size_fee = OVERSIZE_FEE
+        size_fee_name = "Oversize超长费"
+    elif a >= LONGEST_SIDE_LIMIT:
+        size_fee = long_fee
+        size_fee_name = "单边超长费"
+    elif b >= SECOND_LONGEST_SIDE_LIMIT:
+        size_fee = long_fee
+        size_fee_name = "单边超长费"
+    elif girth_value >= GIRTH_SURCHARGE_LIMIT:
+        size_fee = long_fee
+        size_fee_name = "超长费"
+
+    best_price = float("inf")
+    best_big_count = 0
+    best_medium_count = 0
+    best_small_count = 0
+    best_capacity = 0
+
+    for big_count in range(0, 11):
+        for medium_count in range(0, 11):
+            for small_count in range(0, 11):
+
+                capacity = (
+                    big_count * BIG_BOX_WEIGHT_LIMIT
+                    + medium_count * MEDIUM_BOX_WEIGHT_LIMIT
+                    + small_count * SMALL_BOX_WEIGHT_LIMIT
+                )
+
+                price = (
+                    big_count * BIG_BOX_PRICE
+                    + medium_count * MEDIUM_BOX_PRICE
+                    + small_count * SMALL_BOX_PRICE
+                )
+
+                if capacity >= dim_weight and capacity > 0:
+                    if price < best_price:
+                        best_price = price
+                        best_big_count = big_count
+                        best_medium_count = medium_count
+                        best_small_count = small_count
+                        best_capacity = capacity
+
+    total_price = best_price + size_fee
+
+    st.write("## 📦 大件 / 重货优惠计算")
+    st.write(f"箱子尺寸：{length} × {width} × {height} inch")
+    st.write(f"体积重：({length} × {width} × {height}) / 139 = {dim_weight} lbs")
+    st.write(f"最长边 + 横截面周长：{a} + 2 × ({b} + {h}) = {girth_value}")
+
+    st.write("#### 📏 超长费用")
+
+    if size_fee > 0:
+        st.write(f"{size_fee_name}：{size_fee} 美金")
+    else:
+        st.write("超长相关费用：0 美金")
+
+    st.write("#### 📦 优惠拆分方式")
+
+    split_parts = []
+
+    if best_big_count > 0:
+        st.write(f"大箱：{BIG_BOX_PRICE} × {best_big_count}")
+        split_parts.append(f"{BIG_BOX_PRICE} × {best_big_count}")
+
+    if best_medium_count > 0:
+        st.write(f"中箱：{MEDIUM_BOX_PRICE} × {best_medium_count}")
+        split_parts.append(f"{MEDIUM_BOX_PRICE} × {best_medium_count}")
+
+    if best_small_count > 0:
+        st.write(f"小箱：{SMALL_BOX_PRICE} × {best_small_count}")
+        split_parts.append(f"{SMALL_BOX_PRICE} × {best_small_count}")
+
+    st.write(f"可覆盖重量：{best_capacity} lbs")
+
+    if size_fee > 0:
+        split_parts.append(f"{size_fee}")
+
+    st.success(
+        f"优惠算法总价 = {' + '.join(split_parts)} = {total_price:g} 美金"
+    )
+
+    return total_price
+
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
 
 # st.title("口水蛙的额外费用计算器")
@@ -325,8 +452,61 @@ if st.button("计算额外费用"):
 
 
 
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
+st.divider()
 
+st.title("大件 / 重货优惠计算器")
+
+large_unit = st.radio(
+    "请选择尺寸单位",
+    ["inch", "cm"],
+    key="large_unit"
+)
+
+large_length = st.text_input(
+    f"请输入长度（{large_unit}）",
+    placeholder="长度",
+    key="large_length"
+)
+
+large_width = st.text_input(
+    f"请输入宽度（{large_unit}）",
+    placeholder="宽度",
+    key="large_width"
+)
+
+large_height = st.text_input(
+    f"请输入高度（{large_unit}）",
+    placeholder="高度",
+    key="large_height"
+)
+
+large_shipping_type = st.radio(
+    "是否国际件？",
+    ["国际", "国内"],
+    key="large_shipping_type"
+)
+
+large_is_international = large_shipping_type == "国际"
+
+if st.button("计算大件 / 重货优惠价格"):
+
+    try:
+        large_length = float(large_length)
+        large_width = float(large_width)
+        large_height = float(large_height)
+
+        calculate_large_package_discount_price(
+            large_length,
+            large_width,
+            large_height,
+            large_is_international,
+            large_unit
+        )
+
+    except:
+        st.error("请输入有效数字")
 

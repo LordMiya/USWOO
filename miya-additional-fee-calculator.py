@@ -296,7 +296,7 @@ def calculate_extra_fee(
 
 tab1, tab2 = st.tabs([
     "额外费用计算",
-    "尺寸换算"
+    "单位换算"
 ])
 
 
@@ -448,10 +448,11 @@ with tab1:
         except Exception as e:
             st.error(f"程序错误：{e}")
 
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 with tab2:
 
-    st.title("口水蛙的简易箱子尺寸换算器")
+    st.title("📏 口水蛙的尺寸换算器")
 
     convert_direction = st.radio(
         "请选择换算方向",
@@ -477,77 +478,125 @@ with tab2:
         key="convert_height"
     )
 
-if st.button("换算尺寸", key="convert_button"):
+    if st.button("换算尺寸", key="convert_button"):
 
-    try:
+        try:
 
-        values = []
+            values = []
 
-        # 收集用户输入
-        if convert_length.strip() != "":
-            values.append(float(convert_length))
+            # 收集用户输入
+            if convert_length.strip() != "":
+                values.append(float(convert_length))
 
-        if convert_width.strip() != "":
-            values.append(float(convert_width))
+            if convert_width.strip() != "":
+                values.append(float(convert_width))
 
-        if convert_height.strip() != "":
-            values.append(float(convert_height))
+            if convert_height.strip() != "":
+                values.append(float(convert_height))
 
-        # 至少输入一个
-        if len(values) == 0:
-            st.error("请至少输入一个数字")
+            # 至少输入一个
+            if len(values) == 0:
+                st.error("请至少输入一个数字")
 
-        else:
-
-            st.balloons() 
-
-            # inch → cm
-            if convert_direction == "inch → cm":
-
-                converted_values = [
-                    round(v * 2.54, 2)
-                    for v in values
-                ]
-
-                original_text = " × ".join(
-                    str(v) for v in values
-                )
-
-                converted_text = " × ".join(
-                    str(v) for v in converted_values
-                )
-
-                st.success(
-                    f"{original_text} inch\n\n"
-                    f"=\n\n"
-                    f"{converted_text} cm"
-                )
-
-            # cm → inch
             else:
 
-                converted_values = [
-                    round(v / 2.54, 2)
-                    for v in values
-                ]
+                st.balloons() 
 
-                original_text = " × ".join(
-                    str(v) for v in values
-                )
+                # inch → cm
+                if convert_direction == "inch → cm":
 
-                converted_text = " × ".join(
-                    str(v) for v in converted_values
-                )
+                    converted_values = [
+                        round(v * 2.54, 2)
+                        for v in values
+                    ]
+
+                    original_text = " × ".join(
+                        str(v) for v in values
+                    )
+
+                    converted_text = " × ".join(
+                        str(v) for v in converted_values
+                    )
+
+                    st.success(
+                        f"{original_text} inch\n\n"
+                        f"=\n\n"
+                        f"{converted_text} cm"
+                    )
+
+                # cm → inch
+                else:
+
+                    converted_values = [
+                        round(v / 2.54, 2)
+                        for v in values
+                    ]
+
+                    original_text = " × ".join(
+                        str(v) for v in values
+                    )
+
+                    converted_text = " × ".join(
+                        str(v) for v in converted_values
+                    )
+
+                    st.success(
+                        f"{original_text} cm\n\n"
+                        f"=\n\n"
+                        f"{converted_text} inch"
+                    )
+
+        except ValueError:
+            st.error("请输入有效数字")
+
+
+    st.divider()
+
+
+    st.title("⚖️ 重量换算器")
+
+    weight_direction = st.radio(
+        "请选择重量换算方向",
+        ["lb → kg", "kg → lb"],
+        key="weight_direction"
+    )
+
+    weight_input = st.text_input(
+        "请输入重量",
+        placeholder="重量",
+        key="weight_input"
+    )
+
+    if st.button("换算重量", key="weight_convert_button"):
+
+        try:
+
+            weight_value = float(weight_input)
+
+            # lb → kg
+            if weight_direction == "lb → kg":
+
+                converted_weight = round(weight_value / 2.20462, 2)
 
                 st.success(
-                    f"{original_text} cm\n\n"
+                    f"{weight_value} lbs\n\n"
                     f"=\n\n"
-                    f"{converted_text} inch"
+                    f"{converted_weight} kg"
                 )
 
-    except ValueError:
-        st.error("请输入有效数字")
+            # kg → lb
+            else:
 
+                converted_weight = round(weight_value * 2.20462, 2)
+
+                st.success(
+                    f"{weight_value} kg\n\n"
+                    f"=\n\n"
+                    f"{converted_weight} lbs"
+                )
+
+        except ValueError:
+            st.error("请输入有效数字")
 
 
 

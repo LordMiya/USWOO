@@ -415,6 +415,10 @@ with tab1:
 
     is_international = shipping_type == "国际"
 
+
+    st.divider()
+
+
     if st.button("计算额外费用"):
 
         try:
@@ -456,57 +460,93 @@ with tab2:
     )
 
     convert_length = st.text_input(
-        "长度",
+        "请输入长度",
         placeholder="长度",
         key="convert_length"
     )
 
     convert_width = st.text_input(
-        "宽度",
+        "请输入宽度",
         placeholder="宽度",
         key="convert_width"
     )
 
     convert_height = st.text_input(
-        "高度",
+        "请输入高度",
         placeholder="高度",
         key="convert_height"
     )
 
-    if st.button("换算尺寸", key="convert_button"):
+if st.button("换算尺寸", key="convert_button"):
 
-        try:
+    try:
 
-            convert_length = float(convert_length)
-            convert_width = float(convert_width)
-            convert_height = float(convert_height)
+        values = []
 
+        # 收集用户输入
+        if convert_length.strip() != "":
+            values.append(float(convert_length))
+
+        if convert_width.strip() != "":
+            values.append(float(convert_width))
+
+        if convert_height.strip() != "":
+            values.append(float(convert_height))
+
+        # 至少输入一个
+        if len(values) == 0:
+            st.error("请至少输入一个数字")
+
+        else:
+
+            st.balloons() 
+
+            # inch → cm
             if convert_direction == "inch → cm":
 
-                st.success(
-                    f"{convert_length} × "
-                    f"{convert_width} × "
-                    f"{convert_height} inch\n\n"
-                    f"=\n\n"
-                    f"{convert_length * 2.54:.2f} × "
-                    f"{convert_width * 2.54:.2f} × "
-                    f"{convert_height * 2.54:.2f} cm"
+                converted_values = [
+                    round(v * 2.54, 2)
+                    for v in values
+                ]
+
+                original_text = " × ".join(
+                    str(v) for v in values
                 )
 
+                converted_text = " × ".join(
+                    str(v) for v in converted_values
+                )
+
+                st.success(
+                    f"{original_text} inch\n\n"
+                    f"=\n\n"
+                    f"{converted_text} cm"
+                )
+
+            # cm → inch
             else:
 
-                st.success(
-                    f"{convert_length} × "
-                    f"{convert_width} × "
-                    f"{convert_height} cm\n\n"
-                    f"=\n\n"
-                    f"{convert_length / 2.54:.2f} × "
-                    f"{convert_width / 2.54:.2f} × "
-                    f"{convert_height / 2.54:.2f} inch"
+                converted_values = [
+                    round(v / 2.54, 2)
+                    for v in values
+                ]
+
+                original_text = " × ".join(
+                    str(v) for v in values
                 )
 
-        except ValueError:
-            st.error("请输入有效数字")
+                converted_text = " × ".join(
+                    str(v) for v in converted_values
+                )
+
+                st.success(
+                    f"{original_text} cm\n\n"
+                    f"=\n\n"
+                    f"{converted_text} inch"
+                )
+
+    except ValueError:
+        st.error("请输入有效数字")
 
 
 

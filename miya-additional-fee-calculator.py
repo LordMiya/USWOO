@@ -294,9 +294,10 @@ def calculate_extra_fee(
 
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
 
-tab1, tab2 = st.tabs([
+tab1, tab2, tab3 = st.tabs([
     "额外费用计算",
-    "单位换算"
+    "尺寸/重量换算",
+    "FedEx邮编查询构思"
 ])
 
 
@@ -602,6 +603,59 @@ with tab2:
 
 
 
+
+
+with tab3:
+
+    st.title("FedEx 中国邮编服务范围查询构思")
+
+    st.info(
+        "未来可以接入 FedEx Developer Portal API。"
+        "员工输入中国 6 位邮编后，系统自动判断：正常服务范围 / 偏远地区 / 邮编有误。"
+    )
+
+    postal_code = st.text_input(
+        "请输入中国 6 位邮编",
+        placeholder="例如：200000",
+        key="fedex_postal_code"
+    )
+
+    if st.button("模拟查询", key="fedex_postal_check_button"):
+
+        if postal_code.strip() == "":
+            st.error("请输入邮编")
+
+        elif not postal_code.isdigit() or len(postal_code) != 6:
+            st.error("邮编格式有误：请输入 6 位数字")
+
+        else:
+            st.success("邮编格式正确。未来这里会调用 FedEx API 查询服务范围。")
+
+            st.write("### 未来返回结果示例")
+            st.write("✅ 正常服务范围")
+            st.write("⚠️ 偏远地区，需要额外确认费用或时效")
+            st.write("❌ 邮编有误 / FedEx 无法识别")
+
+    st.divider()
+
+    st.write("### 为什么要做这个功能")
+    st.write(
+        "目前从小程序手动查询邮编服务范围比较慢。"
+        "如果通过 API 自动查询，员工只需要输入邮编，几秒内就能得到判断结果，"
+        "适合客服报价和下单前检查。"
+    )
+
+    st.write("### 后续开发思路")
+    st.write(
+        "1. 申请 / 配置 FedEx Developer Portal API 权限\n\n"
+        "2. 用邮编调用 FedEx 服务范围或报价相关接口\n\n"
+        "3. 解析返回结果，判断是否正常服务、偏远或无效邮编\n\n"
+        "4. 把结果展示在 Streamlit 页面中"
+    )
+
+
+
+    
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 

@@ -292,19 +292,21 @@ def calculate_extra_fee(
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
+
+tab1, tab2 = st.tabs([
+    "额外费用计算",
+    "尺寸换算"
+])
+
+
+
+
+
+
+
+
+
 
 # st.title("口水蛙的额外费用计算器")
 
@@ -358,78 +360,153 @@ def calculate_extra_fee(
 #         unit
 #     )
 
-st.title("口水蛙的额外费用计算器")
-
-unit = st.radio(
-    "请选择尺寸单位",
-    ["inch", "cm"]
-)
-
-length = st.text_input(
-    f"请输入长度（{unit}）",
-    placeholder="长度"
-)
-
-width = st.text_input(
-    f"请输入宽度（{unit}）",
-    placeholder="宽度"
-)
-
-height = st.text_input(
-    f"请输入高度（{unit}）",
-    placeholder="高度"
-)
-
-actual_weight_unit = st.radio(
-    "实际重量单位（可选）",
-    ["lb", "kg"],
-    key="actual_weight_unit"
-)
-
-actual_weight_input = st.text_input(
-    f"请输入实际重量（{actual_weight_unit}，可不填）",
-    placeholder="不填则只按体积重计算",
-    key="actual_weight_input"
-)
-
-shipping_type = st.radio(
-    "是否国际件？",
-    ["国际", "国内"]
-)
-
-is_international = shipping_type == "国际"
-
-if st.button("计算额外费用"):
-
-    try:
-        length = float(length)
-        width = float(width)
-        height = float(height)
-
-        actual_weight = None
-
-        if actual_weight_input.strip() != "":
-            actual_weight = float(actual_weight_input)
-
-        calculate_extra_fee(
-            length,
-            width,
-            height,
-            is_international,
-            unit,
-            actual_weight,
-            actual_weight_unit
-        )
-
-    except ValueError:
-        st.error("请输入有效数字")
-
-    except Exception as e:
-        st.error(f"程序错误：{e}")
 
 
 
 
+with tab1:
+    st.title("口水蛙的额外费用计算器")
+
+    unit = st.radio(
+        "请选择尺寸单位",
+        ["inch", "cm"]
+    )
+
+    length = st.text_input(
+        f"请输入长度（{unit}）",
+        placeholder="长度"
+    )
+
+    width = st.text_input(
+        f"请输入宽度（{unit}）",
+        placeholder="宽度"
+    )
+
+    height = st.text_input(
+        f"请输入高度（{unit}）",
+        placeholder="高度"
+    )
+
+
+
+
+    st.divider()
+
+
+
+
+
+    actual_weight_unit = st.radio(
+        "实际重量单位（可选）",
+        ["lb", "kg"],
+        key="actual_weight_unit"
+    )
+
+    actual_weight_input = st.text_input(
+        f"请输入实际重量（{actual_weight_unit}，可不填）",
+        placeholder="不填则只按体积重计算",
+        key="actual_weight_input"
+    )
+
+    shipping_type = st.radio(
+        "是否国际件？",
+        ["国际", "国内"]
+    )
+
+    is_international = shipping_type == "国际"
+
+    if st.button("计算额外费用"):
+
+        try:
+            length = float(length)
+            width = float(width)
+            height = float(height)
+
+            actual_weight = None
+
+            if actual_weight_input.strip() != "":
+                actual_weight = float(actual_weight_input)
+
+            calculate_extra_fee(
+                length,
+                width,
+                height,
+                is_international,
+                unit,
+                actual_weight,
+                actual_weight_unit
+            )
+            # st.balloons()    ######################################## 特效！！！！！！！！！
+
+        except ValueError:
+            st.error("请输入有效数字")
+
+        except Exception as e:
+            st.error(f"程序错误：{e}")
+
+
+with tab2:
+
+    st.title("口水蛙的简易箱子尺寸换算器")
+
+    convert_direction = st.radio(
+        "请选择换算方向",
+        ["inch → cm", "cm → inch"],
+        key="convert_direction"
+    )
+
+    convert_length = st.text_input(
+        "长度",
+        placeholder="长度",
+        key="convert_length"
+    )
+
+    convert_width = st.text_input(
+        "宽度",
+        placeholder="宽度",
+        key="convert_width"
+    )
+
+    convert_height = st.text_input(
+        "高度",
+        placeholder="高度",
+        key="convert_height"
+    )
+
+    if st.button("换算尺寸", key="convert_button"):
+
+        try:
+
+            convert_length = float(convert_length)
+            convert_width = float(convert_width)
+            convert_height = float(convert_height)
+
+            if convert_direction == "inch → cm":
+
+                st.success(
+                    f"{convert_length} × "
+                    f"{convert_width} × "
+                    f"{convert_height} inch\n\n"
+                    f"=\n\n"
+                    f"{convert_length * 2.54:.2f} × "
+                    f"{convert_width * 2.54:.2f} × "
+                    f"{convert_height * 2.54:.2f} cm"
+                )
+
+            else:
+
+                st.success(
+                    f"{convert_length} × "
+                    f"{convert_width} × "
+                    f"{convert_height} cm\n\n"
+                    f"=\n\n"
+                    f"{convert_length / 2.54:.2f} × "
+                    f"{convert_width / 2.54:.2f} × "
+                    f"{convert_height / 2.54:.2f} inch"
+                )
+
+        except ValueError:
+            st.error("请输入有效数字")
 
 
 

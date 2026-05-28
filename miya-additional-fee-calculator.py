@@ -36,15 +36,17 @@ GIRTH_SURCHARGE_LIMIT = 95
 # ===== 超长费用($) =====
 INTERNATIONAL_LONG_FEE = 50
 DOMESTIC_LONG_FEE = 30
+INTERNATIONALANDDOMESTIC_LONG_FEE = INTERNATIONAL_LONG_FEE + DOMESTIC_LONG_FEE # 代清关超长费用
 
 
 # ===== Oversize超长费用($) =====
-OVERSIZE_FEE = 100
+OVERSIZE_FEE = 100 # 全线路统一价格
 
 
 # ===== 不同物流线路 大箱限重(lbs)  =====
 INTERNATIONAL_WEIGHT_LIMIT = 55
 DOMESTIC_WEIGHT_LIMIT = 50
+INTERNATIONALANDDOMESTIC_WEIGHT_LIMIT = 50 # 代清关大箱限重
 
 
 # =====  不同物流线路 超重费率 =====
@@ -54,6 +56,8 @@ INTERNATIONAL_OVERWEIGHT_PENALTY = 30
 DOMESTIC_OVERWEIGHT_RATE = 1.5
 DOMESTIC_OVERWEIGHT_PENALTY = 25
 
+INTERNATIONALANDDOMESTIC_OVERWEIGHT_RATE = 5.8 # 代清关超重系数
+INTERNATIONALANDDOMESTIC_WEIGHT_LIMIT_OVERWEIGHT_PENALTY = 25 # 代清关超重罚款
 
 
 
@@ -100,12 +104,13 @@ def get_international_input():
 
 
 
-# ======================================== 定义额外定价函数 ========================================
-def calculate_extra_fee(
+# ======================================== 定义定价函数 ========================================
+
+def calculate_shipping_fee(
     length,
     width,
     height,
-    is_international,
+    route_type,
     unit,
     actual_weight=None,
     actual_weight_unit="lb",
@@ -143,26 +148,40 @@ def calculate_extra_fee(
     else:
         billable_weight = dim_weight
 
-    # 国际 / 国内参数
-    if is_international:
+    # ===== 根据线路选择参数 =====
+
+    if route_type == "自主清关":
         weight_limit = INTERNATIONAL_WEIGHT_LIMIT
         overweight_rate = INTERNATIONAL_OVERWEIGHT_RATE
         penalty = INTERNATIONAL_OVERWEIGHT_PENALTY
         long_fee = INTERNATIONAL_LONG_FEE
-    else:
+
+    elif route_type == "代清关":
+        weight_limit = INTERNATIONALANDDOMESTIC_WEIGHT_LIMIT
+        overweight_rate = INTERNATIONALANDDOMESTIC_OVERWEIGHT_RATE
+        penalty = INTERNATIONALANDDOMESTIC_WEIGHT_LIMIT_OVERWEIGHT_PENALTY
+        long_fee = INTERNATIONALANDDOMESTIC_LONG_FEE
+
+    elif route_type == "境内":
         weight_limit = DOMESTIC_WEIGHT_LIMIT
         overweight_rate = DOMESTIC_OVERWEIGHT_RATE
         penalty = DOMESTIC_OVERWEIGHT_PENALTY
         long_fee = DOMESTIC_LONG_FEE
 
-    # 超重费
+    else:
+        st.error(f"未知线路类型：{route_type}")
+        return None
+
+    # ===== 超重费 =====
+
     overweight_fee = 0
 
     if billable_weight > weight_limit:
         overweight_lbs = billable_weight - weight_limit
         overweight_fee = overweight_lbs * overweight_rate + penalty
 
-    # 超长 / 单边超长 / oversize
+    # ===== 超长 / 单边超长 / oversize =====
+
     size_fee = 0
     size_fee_name = ""
 
@@ -171,12 +190,15 @@ def calculate_extra_fee(
     if girth_value >= OVERSIZE_GIRTH_LIMIT:
         size_fee = OVERSIZE_FEE
         size_fee_name = "Oversize超长费"
+
     elif a >= LONGEST_SIDE_LIMIT:
         size_fee = long_fee
         size_fee_name = "单边超长费"
+
     elif b >= SECOND_LONGEST_SIDE_LIMIT:
         size_fee = long_fee
         size_fee_name = "单边超长费"
+
     elif girth_value >= GIRTH_SURCHARGE_LIMIT:
         size_fee = long_fee
         size_fee_name = "超长费"
@@ -186,6 +208,7 @@ def calculate_extra_fee(
     # ===== 输出到网页 =====
 
     st.write("## 📦 额外费用计算")
+    st.write(f"线路类型：{route_type}")
 
     st.write(
         f"体积重：({length} × {width} × {height}) / 139 = {dim_weight} lbs"
@@ -272,7 +295,7 @@ def calculate_extra_fee(
     else:
         st.write("最终收取：超长相关费用 = 0 美金")
 
-    # ===== 总额 =====
+    # ===== 额外费用总额 =====
 
     if parts:
         st.success(
@@ -282,6 +305,7 @@ def calculate_extra_fee(
     else:
         st.success("额外费用 = 0 美金")
 
+    # ===== 如果有单箱运费，计算最终总价 =====
 
     if base_price is not None:
         final_total = base_price + total_extra_fee
@@ -303,101 +327,53 @@ def calculate_extra_fee(
 
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
 
-tab1, tab2, tab3 = st.tabs([
+
+
+
+
+tab1, tab2, tab3, tab4 = st.tabs([
     "自主清关费用计算",
+    "代清关费用计算",
     "尺寸/重量换算",
     "FedEx邮编查询构思"
 ])
 
-
-
-
-
-
-
-
-
-
-# st.title("自主蛙的费用计算器")
-
-# unit = st.radio(
-#     "请选择尺寸单位",
-#     ["inch", "cm"]
-# )
-
-# length = st.number_input(
-#     f"请输入长度（{unit}）",
-#     min_value=0.0,
-#     value=None,
-#     placeholder="长度"
-# )
-
-# width = st.number_input(
-#     f"请输入宽度（{unit}）",
-#     min_value=0.0,
-#     value=None,
-#     placeholder="宽度"
-# )
-
-# height = st.number_input(
-#     f"请输入高度（{unit}）",
-#     min_value=0.0,
-#     value=None,
-#     placeholder="高度"
-# )
-
-
-
-
-
-
-# shipping_type = st.radio(
-#     "是否国际件？",
-#     ["国际", "国内"]
-# )
-
-# is_international = shipping_type == "国际"
-
-# if st.button("计算额外费用"):
-
-#     # st.balloons()
-
-#     calculate_extra_fee(
-#         length,
-#         width,
-#         height,
-#         is_international,
-#         unit
-#     )
-
-
-
-
+# =====================================================================
+# TAB 1 自主清关
+# =====================================================================
 
 with tab1:
+
     st.title("自主蛙的费用计算器")
+
     st.write("")
+
     st.info("当前计算器适用于：自主清关 / 国际线路")
-    
+
+    route_type = "自主清关"
 
     unit = st.radio(
         "请选择尺寸单位",
-        ["inch", "cm"]
+        ["inch", "cm"],
+        key="tab1_unit"
     )
 
     length = st.text_input(
         f"请输入长度（{unit}）",
-        placeholder="长度"
+        placeholder="长度",
+        key="tab1_length"
     )
 
     width = st.text_input(
         f"请输入宽度（{unit}）",
-        placeholder="宽度"
+        placeholder="宽度",
+        key="tab1_width"
     )
 
     height = st.text_input(
         f"请输入高度（{unit}）",
-        placeholder="高度"
+        placeholder="高度",
+        key="tab1_height"
     )
 
     st.divider()
@@ -405,64 +381,51 @@ with tab1:
     actual_weight_unit = st.radio(
         "实际重量单位",
         ["lb", "kg"],
-        key="actual_weight_unit"
+        key="tab1_actual_weight_unit"
     )
-
-
-    # shipping_type = st.radio(
-    #     "是否国际件？",
-    #     ["国际", "国内"]
-    # )
-    # is_international = shipping_type == "国际"
-
-    is_international = True
-
 
     actual_weight_input = st.text_input(
         f"请输入实际重量（{actual_weight_unit}，选填）",
         placeholder="不填则只按体积重计算",
-        key="actual_weight_input"
+        key="tab1_actual_weight_input"
     )
 
     base_price_input = st.text_input(
-    "请输入单箱价格（选填）",
-    placeholder="不填则只计算额外费用",
-    key="base_price_input"
+        "请输入单箱价格（选填）",
+        placeholder="不填则只计算额外费用",
+        key="tab1_base_price_input"
     )
-
-    
-
 
     st.divider()
 
-
-    if st.button("计算额外费用"):
+    if st.button("计算费用", key="tab1_calculate_button"):
 
         try:
+
             length = float(length)
             width = float(width)
             height = float(height)
 
             actual_weight = None
+
             if actual_weight_input.strip() != "":
                 actual_weight = float(actual_weight_input)
 
-
             base_price = None
+
             if base_price_input.strip() != "":
                 base_price = float(base_price_input)
 
-            calculate_extra_fee(
+            calculate_shipping_fee(
                 length,
                 width,
                 height,
-                is_international,
+                route_type,
                 unit,
                 actual_weight,
                 actual_weight_unit,
                 base_price
             )
-            # st.balloons()    ######################################## 特效！！！！！！！！！
 
         except ValueError:
             st.error("请输入有效数字")
@@ -470,9 +433,110 @@ with tab1:
         except Exception as e:
             st.error(f"程序错误：{e}")
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# =====================================================================
+# TAB 2 代清关
+# =====================================================================
 
 with tab2:
+
+    st.title("代清蛙的费用计算器")
+
+    st.write("")
+
+    st.info("当前计算器适用于：代清关 / 国际线路")
+
+    route_type = "代清关"
+
+    unit = st.radio(
+        "请选择尺寸单位",
+        ["inch", "cm"],
+        key="tab2_unit"
+    )
+
+    length = st.text_input(
+        f"请输入长度（{unit}）",
+        placeholder="长度",
+        key="tab2_length"
+    )
+
+    width = st.text_input(
+        f"请输入宽度（{unit}）",
+        placeholder="宽度",
+        key="tab2_width"
+    )
+
+    height = st.text_input(
+        f"请输入高度（{unit}）",
+        placeholder="高度",
+        key="tab2_height"
+    )
+
+    st.divider()
+
+    actual_weight_unit = st.radio(
+        "实际重量单位",
+        ["lb", "kg"],
+        key="tab2_actual_weight_unit"
+    )
+
+    actual_weight_input = st.text_input(
+        f"请输入实际重量（{actual_weight_unit}，选填）",
+        placeholder="不填则只按体积重计算",
+        key="tab2_actual_weight_input"
+    )
+
+    base_price_input = st.text_input(
+        "请输入单箱价格（选填）",
+        placeholder="不填则只计算额外费用",
+        key="tab2_base_price_input"
+    )
+
+    st.divider()
+
+    if st.button("计算费用", key="tab2_calculate_button"):
+
+        try:
+
+            length = float(length)
+            width = float(width)
+            height = float(height)
+
+            actual_weight = None
+
+            if actual_weight_input.strip() != "":
+                actual_weight = float(actual_weight_input)
+
+            base_price = None
+
+            if base_price_input.strip() != "":
+                base_price = float(base_price_input)
+
+            calculate_shipping_fee(
+                length,
+                width,
+                height,
+                route_type,
+                unit,
+                actual_weight,
+                actual_weight_unit,
+                base_price
+            )
+
+        except ValueError:
+            st.error("请输入有效数字")
+
+        except Exception as e:
+            st.error(f"程序错误：{e}")
+
+
+
+
+
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+with tab3:
 
     st.title("📏 口水蛙的尺寸换算器")
 
@@ -626,7 +690,7 @@ with tab2:
 
 
 
-with tab3:
+with tab4:
 
     st.title("FedEx 中国邮编服务范围查询构思")
 

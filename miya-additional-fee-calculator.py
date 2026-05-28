@@ -108,7 +108,7 @@ def calculate_extra_fee(
     is_international,
     unit,
     actual_weight=None,
-    actual_weight_unit="lb"
+    actual_weight_unit="lb",
     base_price=None
 ):
     

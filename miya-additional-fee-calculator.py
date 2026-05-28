@@ -400,6 +400,7 @@ with tab1:
         placeholder="高度"
     )
 
+    st.divider()
 
     actual_weight_unit = st.radio(
         "实际重量单位",
@@ -416,7 +417,6 @@ with tab1:
 
     is_international = True
 
-    st.divider()
 
     actual_weight_input = st.text_input(
         f"请输入实际重量（{actual_weight_unit}，选填）",
@@ -425,7 +425,7 @@ with tab1:
     )
 
     base_price_input = st.text_input(
-    "请输入单箱价格（可不填）",
+    "请输入单箱价格（选填）",
     placeholder="不填则只计算额外费用",
     key="base_price_input"
     )

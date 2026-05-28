@@ -633,6 +633,57 @@ with tab3:
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 with tab4:
 
+
+
+    st.title("⚖️ 口水蛙的重量换算器")
+
+    weight_direction = st.radio(
+        "请选择重量换算方向",
+        ["lb → kg", "kg → lb"],
+        key="weight_direction"
+    )
+
+    weight_input = st.text_input(
+        "请输入重量",
+        placeholder="重量",
+        key="weight_input"
+    )
+
+    if st.button("换算重量", key="weight_convert_button"):
+
+        try:
+
+            weight_value = float(weight_input)
+
+            # lb → kg
+            if weight_direction == "lb → kg":
+
+                converted_weight = round(weight_value / 2.20462, 2)
+
+                st.success(
+                    f"{weight_value} lbs\n\n"
+                    f"=\n\n"
+                    f"{converted_weight} kg"
+                )
+
+            # kg → lb
+            else:
+
+                converted_weight = round(weight_value * 2.20462, 2)
+
+                st.success(
+                    f"{weight_value} kg\n\n"
+                    f"=\n\n"
+                    f"{converted_weight} lbs"
+                )
+
+        except ValueError:
+            st.error("请输入有效数字")
+
+
+    st.divider()
+
+
     st.title("📏 口水蛙的尺寸换算器")
 
     convert_direction = st.radio(
@@ -731,53 +782,24 @@ with tab4:
             st.error("请输入有效数字")
 
 
-    st.divider()
 
 
-    st.title("⚖️ 口水蛙的重量换算器")
 
-    weight_direction = st.radio(
-        "请选择重量换算方向",
-        ["lb → kg", "kg → lb"],
-        key="weight_direction"
-    )
 
-    weight_input = st.text_input(
-        "请输入重量",
-        placeholder="重量",
-        key="weight_input"
-    )
 
-    if st.button("换算重量", key="weight_convert_button"):
 
-        try:
 
-            weight_value = float(weight_input)
 
-            # lb → kg
-            if weight_direction == "lb → kg":
 
-                converted_weight = round(weight_value / 2.20462, 2)
 
-                st.success(
-                    f"{weight_value} lbs\n\n"
-                    f"=\n\n"
-                    f"{converted_weight} kg"
-                )
 
-            # kg → lb
-            else:
 
-                converted_weight = round(weight_value * 2.20462, 2)
 
-                st.success(
-                    f"{weight_value} kg\n\n"
-                    f"=\n\n"
-                    f"{converted_weight} lbs"
-                )
 
-        except ValueError:
-            st.error("请输入有效数字")
+
+
+
+    
 
 
 

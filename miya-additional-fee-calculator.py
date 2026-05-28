@@ -16,7 +16,7 @@ MEDIUM_BOX_PRICE = 138
 SMALL_BOX_PRICE = 98
 
 
-# ===== 箱型对应重量(lbs) =====
+# ===== 箱型对应限重(lbs) =====
 BIG_BOX_WEIGHT_LIMIT = 55
 MEDIUM_BOX_WEIGHT_LIMIT = 45
 SMALL_BOX_WEIGHT_LIMIT = 35
@@ -27,7 +27,7 @@ LONGEST_SIDE_LIMIT = 48
 SECOND_LONGEST_SIDE_LIMIT = 28
 
 
-# ===== girth 阈值 (inch) =====
+# ===== girth 阈值 最长边+横截面周长 (inch) =====
 # girth = a + 2(b+h)
 OVERSIZE_GIRTH_LIMIT = 130
 GIRTH_SURCHARGE_LIMIT = 95
@@ -38,7 +38,7 @@ INTERNATIONAL_LONG_FEE = 50
 DOMESTIC_LONG_FEE = 30
 
 
-# ===== Oversize费用($) =====
+# ===== Oversize超长费用($) =====
 OVERSIZE_FEE = 100
 
 
@@ -109,6 +109,7 @@ def calculate_extra_fee(
     unit,
     actual_weight=None,
     actual_weight_unit="lb"
+    base_price=None
 ):
     
     # 如果是 cm，先换算成 inch
@@ -281,6 +282,14 @@ def calculate_extra_fee(
     else:
         st.success("额外费用 = 0 美金")
 
+
+    if base_price is not None:
+    final_total = base_price + total_extra_fee
+    st.success(
+        f"总价 = 单箱运费 {base_price:g} + 额外费用 {total_extra_fee:g} = "
+        f"{final_total:g} 美金"
+    )
+
     st.write("")
     st.write("🐸 宮里帮您节省了30秒的计算时间！")
     st.write("🧧 发财！发货！红包拿来！")
@@ -388,33 +397,38 @@ with tab1:
         placeholder="高度"
     )
 
-
-
-
     st.divider()
 
-
-
-
-
     actual_weight_unit = st.radio(
-        "实际重量单位（可选）",
+        "实际重量单位",
         ["lb", "kg"],
         key="actual_weight_unit"
     )
 
-    actual_weight_input = st.text_input(
-        f"请输入实际重量（{actual_weight_unit}，可不填）",
-        placeholder="不填则只按体积重计算",
-        key="actual_weight_input"
-    )
 
     shipping_type = st.radio(
         "是否国际件？",
         ["国际", "国内"]
     )
 
+
     is_international = shipping_type == "国际"
+
+    st.divider()
+
+    actual_weight_input = st.text_input(
+        f"请输入实际重量（{actual_weight_unit}，选填）",
+        placeholder="不填则只按体积重计算",
+        key="actual_weight_input"
+    )
+
+    base_price_input = st.text_input(
+    "请输入单箱价格（可不填）",
+    placeholder="不填则只计算额外费用",
+    key="base_price_input"
+    )
+
+    
 
 
     st.divider()
@@ -428,9 +442,13 @@ with tab1:
             height = float(height)
 
             actual_weight = None
-
             if actual_weight_input.strip() != "":
                 actual_weight = float(actual_weight_input)
+
+
+            base_price = None
+            if base_price_input.strip() != "":
+                base_price = float(base_price_input)
 
             calculate_extra_fee(
                 length,
@@ -439,7 +457,8 @@ with tab1:
                 is_international,
                 unit,
                 actual_weight,
-                actual_weight_unit
+                actual_weight_unit,
+                base_price
             )
             # st.balloons()    ######################################## 特效！！！！！！！！！
 

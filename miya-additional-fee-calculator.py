@@ -376,6 +376,9 @@ tab1, tab2, tab3 = st.tabs([
 
 with tab1:
     st.title("自主蛙的费用计算器")
+    st.write("")
+    st.info("当前计算器适用于：自主清关 / 国际线路")
+    
 
     unit = st.radio(
         "请选择尺寸单位",
@@ -397,7 +400,6 @@ with tab1:
         placeholder="高度"
     )
 
-    st.divider()
 
     actual_weight_unit = st.radio(
         "实际重量单位",
@@ -406,13 +408,13 @@ with tab1:
     )
 
 
-    shipping_type = st.radio(
-        "是否国际件？",
-        ["国际", "国内"]
-    )
+    # shipping_type = st.radio(
+    #     "是否国际件？",
+    #     ["国际", "国内"]
+    # )
+    # is_international = shipping_type == "国际"
 
-
-    is_international = shipping_type == "国际"
+    is_international = True
 
     st.divider()
 

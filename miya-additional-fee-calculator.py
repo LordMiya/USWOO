@@ -284,11 +284,11 @@ def calculate_extra_fee(
 
 
     if base_price is not None:
-    final_total = base_price + total_extra_fee
-    st.success(
-        f"总价 = 单箱运费 {base_price:g} + 额外费用 {total_extra_fee:g} = "
-        f"{final_total:g} 美金"
-    )
+        final_total = base_price + total_extra_fee
+        st.success(
+            f"总价 = 单箱运费 {base_price:g} + 额外费用 {total_extra_fee:g} = "
+            f"{final_total:g} 美金"
+        )
 
     st.write("")
     st.write("🐸 宮里帮您节省了30秒的计算时间！")

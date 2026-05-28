@@ -304,7 +304,7 @@ def calculate_extra_fee(
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
 
 tab1, tab2, tab3 = st.tabs([
-    "额外费用计算",
+    "自主清关费用计算",
     "尺寸/重量换算",
     "FedEx邮编查询构思"
 ])
@@ -318,7 +318,7 @@ tab1, tab2, tab3 = st.tabs([
 
 
 
-# st.title("口水蛙的额外费用计算器")
+# st.title("自主蛙的费用计算器")
 
 # unit = st.radio(
 #     "请选择尺寸单位",
@@ -375,7 +375,7 @@ tab1, tab2, tab3 = st.tabs([
 
 
 with tab1:
-    st.title("口水蛙的额外费用计算器")
+    st.title("自主蛙的费用计算器")
 
     unit = st.radio(
         "请选择尺寸单位",

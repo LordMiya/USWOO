@@ -6,6 +6,11 @@
 
 import math
 import streamlit as st
+import pandas as pd
+
+
+
+EXCEL_FILE = "ODA_OPA_tiers_codes.xlsx" # 全球偏远地区附加费表格
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # =================== constant ======================
@@ -325,18 +330,165 @@ def calculate_shipping_fee(
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+
+
+
+# =========================
+# 读取并清洗 FedEx ODA 表
+# =========================
+
+@st.cache_data
+def load_fedex_oda_data():
+
+    raw_df = pd.read_excel(
+        EXCEL_FILE,
+        sheet_name="Postal Codes and Tiers ",
+        header=None
+    )
+
+    df = raw_df.iloc[10:].copy()
+
+    df = df.iloc[:, :9]
+
+    df.columns = [
+        "country",
+        "country_code",
+        "city",
+        "begin_postal",
+        "end_postal",
+        "opa_parcel",
+        "opa_freight",
+        "oda_parcel",
+        "oda_freight"
+    ]
+
+    df = df[df["country"].notna()]
+
+    df["begin_postal"] = pd.to_numeric(
+        df["begin_postal"],
+        errors="coerce"
+    )
+
+    df["end_postal"] = pd.to_numeric(
+        df["end_postal"],
+        errors="coerce"
+    )
+
+    china_df = df[
+        df["country_code"] == "CN"
+    ].copy()
+
+    return china_df
+
+
+# =========================
+# 邮编格式检查
+# =========================
+
+def is_valid_china_postal_format(postal_code):
+    postal_code = str(postal_code).strip()
+    return len(postal_code) == 6 and postal_code.isdigit()
+
+
+# =========================
+# 查询函数
+# =========================
+
+def check_china_fedex_oda(postal_code, china_df):
+    postal_code_str = str(postal_code).strip()
+
+    if not is_valid_china_postal_format(postal_code_str):
+        return {
+            "status": "invalid",
+            "icon": "❌",
+            "message": "查不到此邮政编码，请与客户重新确认",
+            "postal_code": postal_code_str
+        }
+
+    postal_code_num = int(postal_code_str)
+
+    matched = china_df[
+        (china_df["begin_postal"] <= postal_code_num) &
+        (china_df["end_postal"] >= postal_code_num)
+    ]
+
+    if matched.empty:
+        return {
+            "status": "normal",
+            "icon": "✅",
+            "message": "此邮政编码属于正常服务范围",
+            "postal_code": postal_code_str
+        }
+
+    row = matched.iloc[0]
+    oda_parcel = row["oda_parcel"]
+
+    if oda_parcel == "Tier B":
+        return {
+            "status": "oda_tier_b",
+            "icon": "⚠️",
+            "message": "此邮政编码需要收取超范围派送附加费（Tier B）",
+            "postal_code": postal_code_str,
+            "begin_postal": int(row["begin_postal"]),
+            "end_postal": int(row["end_postal"]),
+            "oda_parcel": oda_parcel,
+            # "fee_note": "USD 28.20/票 或 USD 0.43/kg，取较高值"
+        }
+
+    if oda_parcel == "No":
+        return {
+            "status": "manual_check",
+            "icon": "❗",
+            "message": "此邮政编码需要再次确认，可能涉及其他超范围服务规则",
+            "postal_code": postal_code_str,
+            "begin_postal": int(row["begin_postal"]),
+            "end_postal": int(row["end_postal"]),
+            "oda_parcel": oda_parcel
+        }
+
+    return {
+        "status": "unknown",
+        "icon": "❗",
+        "message": "查询结果异常，请人工确认",
+        "postal_code": postal_code_str,
+        "begin_postal": int(row["begin_postal"]),
+        "end_postal": int(row["end_postal"]),
+        "oda_parcel": oda_parcel
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 使用 Streamlit 生成网页简易UI界面，出现输入框
 
 
 
 
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5，tab6 = st.tabs([
     "自主清关",
     "代清关",
     "境内行李",
     "尺寸/重量换算",
-    "FedEx邮编查询构思"
+    "FedEx邮编查询构思",
+    "中国邮编查询"
 ])
 
 # =====================================================================
@@ -861,58 +1013,69 @@ with tab5:
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+ with tab6:
 
-# st.divider()
+    st.subheader("口水蛙的中国邮编查询测试1.0")
 
-# st.title("大件 / 重货优惠计算器")
+    st.caption(
+        "用于快速判断中国邮编是否涉及 FedEx 超范围派送附加费"
+    )
 
-# large_unit = st.radio(
-#     "请选择尺寸单位",
-#     ["inch", "cm"],
-#     key="large_unit"
-# )
 
-# large_length = st.text_input(
-#     f"请输入长度（{large_unit}）",
-#     placeholder="长度",
-#     key="large_length"
-# )
+    st.info(
+        "未来可以接入 FedEx Developer Portal API。"
+        "输入中国 6 位邮编后，系统自动判断：正常服务范围 / 偏远地区 / 邮编有误。"
+    )
 
-# large_width = st.text_input(
-#     f"请输入宽度（{large_unit}）",
-#     placeholder="宽度",
-#     key="large_width"
-# )
+    china_df = load_fedex_oda_data()
 
-# large_height = st.text_input(
-#     f"请输入高度（{large_unit}）",
-#     placeholder="高度",
-#     key="large_height"
-# )
+    postal_code = st.text_input(
+        "请输入邮政编码",
+        placeholder="6位数"
+    )
 
-# large_shipping_type = st.radio(
-#     "是否国际件？",
-#     ["国际", "国内"],
-#     key="large_shipping_type"
-# )
+    if st.button(
+        "查询",
+        key="oda_query"
+    ):
 
-# large_is_international = large_shipping_type == "国际"
+        result = check_china_fedex_oda(
+            postal_code,
+            china_df
+        )
 
-# if st.button("计算大件 / 重货优惠价格"):
+        if result["status"] == "normal":
 
-#     try:
-#         large_length = float(large_length)
-#         large_width = float(large_width)
-#         large_height = float(large_height)
+            st.success(
+                f"{result['icon']} {result['message']}"
+            )
 
-#         calculate_large_package_discount_price(
-#             large_length,
-#             large_width,
-#             large_height,
-#             large_is_international,
-#             large_unit
-#         )
+        elif result["status"] == "oda_tier_b":
 
-#     except:
-#         st.error("请输入有效数字")
+            st.warning(
+                f"{result['icon']} {result['message']}"
+            )
 
+            st.write(
+                f"匹配区间：{result['begin_postal']} - {result['end_postal']}"
+            )
+
+            # st.write(
+            #     f"收费标准：{result['fee_note']}"
+            # )
+
+        elif result["status"] == "manual_check":
+
+            st.error(
+                f"{result['icon']} {result['message']}"
+            )
+
+            st.write(
+                f"匹配区间：{result['begin_postal']} - {result['end_postal']}"
+            )
+
+        else:
+
+            st.error(
+                f"{result['icon']} {result['message']}"
+            )

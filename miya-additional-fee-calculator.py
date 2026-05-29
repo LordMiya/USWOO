@@ -481,8 +481,7 @@ def check_china_fedex_oda(postal_code, china_df):
 
 
 
-
-tab1, tab2, tab3, tab4, tab5，tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "自主清关",
     "代清关",
     "境内行李",
@@ -1023,8 +1022,8 @@ with tab5:
 
 
     st.info(
-        "未来可以接入 FedEx Developer Portal API。"
-        "输入中国 6 位邮编后，系统自动判断：正常服务范围 / 偏远地区 / 邮编有误。"
+        "系统仅依据 FedEx ODA 邮编表进行匹配，能够识别超范围附加费区域（Tier B）及需人工确认区域（No）。
+        "对于不在 ODA 表中的邮编，系统暂默认视为正常服务范围，暂无法区分“真实存在的正常邮编”与“完全不存在的无效邮编"
     )
 
     china_df = load_fedex_oda_data()

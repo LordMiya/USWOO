@@ -35,7 +35,7 @@ SECOND_LONGEST_SIDE_LIMIT = 28
 # ===== girth 阈值 最长边+横截面周长 (inch) =====
 # girth = a + 2(b+h)
 OVERSIZE_GIRTH_LIMIT = 130
-GIRTH_SURCHARGE_LIMIT = 95
+GIRTH_SURCHARGE_LIMIT = 105
 
 
 # ===== 超长费用($) =====
@@ -45,7 +45,7 @@ INTERNATIONALANDDOMESTIC_LONG_FEE = INTERNATIONAL_LONG_FEE + DOMESTIC_LONG_FEE #
 
 
 # ===== Oversize超长费用($) =====
-OVERSIZE_FEE = 100 # 全线路统一价格
+OVERSIZE_FEE = 200 # 全线路统一价格
 
 
 # ===== 不同物流线路 大箱限重(lbs)  =====
@@ -63,6 +63,14 @@ DOMESTIC_OVERWEIGHT_PENALTY = 25
 
 INTERNATIONALANDDOMESTIC_OVERWEIGHT_RATE = 5.8 # 代清关超重系数
 INTERNATIONALANDDOMESTIC_WEIGHT_LIMIT_OVERWEIGHT_PENALTY = 25 # 代清关超重罚款
+
+
+# ===== 通用超长 / Oversize 新增规则 =====
+VOLUME_SURCHARGE_LIMIT = 10368        # a*b*h >= 10368，收普通超长费
+OVERSIZE_SIDE_LIMIT = 95              # 最长边 >= 95，收 Oversize超长费
+OVERSIZE_WEIGHT_LIMIT = 110           # 实际重量 >= 110 lbs，收 Oversize超长费
+OVERSIZE_VOLUME_LIMIT = 17280         # a*b*h >= 17280，收 Oversize超长费
+
 
 
 
@@ -148,7 +156,6 @@ def calculate_shipping_fee(
             actual_weight_lbs = math.ceil(actual_weight * 2.20462)
         else:
             actual_weight_lbs = math.ceil(actual_weight)
-
         billable_weight = max(dim_weight, actual_weight_lbs)
     else:
         billable_weight = dim_weight
@@ -185,17 +192,45 @@ def calculate_shipping_fee(
         overweight_lbs = billable_weight - weight_limit
         overweight_fee = overweight_lbs * overweight_rate + penalty
 
-    # ===== 超长 / 单边超长 / oversize =====
+    # ===== 超长 / 单边超长 / Oversize =====
 
     size_fee = 0
     size_fee_name = ""
 
     girth_value = a + 2 * (b + h)
 
-    if girth_value >= OVERSIZE_GIRTH_LIMIT:
+    # NEW: 三边体积规则
+    volume_value = a * b * h
+
+    # NEW: Oversize 重量规则只看“实际重量”，不看体积重
+    actual_weight_oversize = (
+        actual_weight_lbs is not None
+        and actual_weight_lbs >= OVERSIZE_WEIGHT_LIMIT
+    )
+
+    # NEW / MODIFIED:
+    # Oversize 优先级最高
+    # 条件：
+    # 1. 最长边 >= 95
+    # 2. 最长边 + 横截面周长 >= 130
+    # 3. 实际重量 >= 110 lbs
+    # 4. 三边体积 >= 17280
+    if (
+        a > OVERSIZE_SIDE_LIMIT
+        or girth_value >= OVERSIZE_GIRTH_LIMIT
+        or actual_weight_oversize
+        or volume_value >= OVERSIZE_VOLUME_LIMIT
+    ):
         size_fee = OVERSIZE_FEE
         size_fee_name = "Oversize超长费"
 
+    # NEW / MODIFIED:
+    # 未触发 Oversize 时，再判断普通超长
+    # 条件：
+    # 1. 最长边 >= 48
+    # 2. 次长边 >= 30
+    # 3. 最长边 + 横截面周长 >= 105
+    # 4. 三边体积 >= 10368
     elif a >= LONGEST_SIDE_LIMIT:
         size_fee = long_fee
         size_fee_name = "单边超长费"
@@ -205,6 +240,10 @@ def calculate_shipping_fee(
         size_fee_name = "单边超长费"
 
     elif girth_value >= GIRTH_SURCHARGE_LIMIT:
+        size_fee = long_fee
+        size_fee_name = "超长费"
+
+    elif volume_value >= VOLUME_SURCHARGE_LIMIT:
         size_fee = long_fee
         size_fee_name = "超长费"
 
@@ -247,45 +286,103 @@ def calculate_shipping_fee(
 
     st.write("#### 📏 超长规则检查")
 
-    # a. 最长边
-    if a >= LONGEST_SIDE_LIMIT:
+    if a > LONGEST_SIDE_LIMIT:
         st.write(
-            f"❌ 最长边 = {a} inch ≥ {LONGEST_SIDE_LIMIT} inch"
+            f"❌ 最长边 = {a} inch > {LONGEST_SIDE_LIMIT} inch"
             f" → 触发单边超长费 {long_fee} 美金"
         )
     else:
         st.write(
-            f"✅ 最长边 = {a} inch < {LONGEST_SIDE_LIMIT} inch"
+            f"✅ 最长边 = {a} inch ≤ {LONGEST_SIDE_LIMIT} inch"
         )
 
-    # b. 次长边
-    if b >= SECOND_LONGEST_SIDE_LIMIT:
+    if b > SECOND_LONGEST_SIDE_LIMIT:
         st.write(
-            f"❌ 次长边 = {b} inch ≥ {SECOND_LONGEST_SIDE_LIMIT} inch"
+            f"❌ 次长边 = {b} inch > {SECOND_LONGEST_SIDE_LIMIT} inch"
             f" → 触发单边超长费 {long_fee} 美金"
         )
     else:
         st.write(
-            f"✅ 次长边 = {b} inch < {SECOND_LONGEST_SIDE_LIMIT} inch"
+            f"✅ 次长边 = {b} inch ≤ {SECOND_LONGEST_SIDE_LIMIT} inch"
         )
 
-    # c. 最长边 + 横截面周长
-    if girth_value >= OVERSIZE_GIRTH_LIMIT:
-        st.write(
-            f"❌ Oversize超长："
-            f"{a} + 2 × ({b} + {h}) = {girth_value} ≥ {OVERSIZE_GIRTH_LIMIT}"
-            f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
-        )
-    elif girth_value >= GIRTH_SURCHARGE_LIMIT:
+    if girth_value > GIRTH_SURCHARGE_LIMIT:
         st.write(
             f"❌ 最长边+横截面周长："
-            f"{a} + 2 × ({b} + {h}) = {girth_value} ≥ {GIRTH_SURCHARGE_LIMIT}"
+            f"{a} + 2 × ({b} + {h}) = {girth_value} > {GIRTH_SURCHARGE_LIMIT}"
             f" → 触发超长费 {long_fee} 美金"
         )
     else:
         st.write(
             f"✅ 最长边+横截面周长："
-            f"{a} + 2 × ({b} + {h}) = {girth_value} < {GIRTH_SURCHARGE_LIMIT}"
+            f"{a} + 2 × ({b} + {h}) = {girth_value} ≤ {GIRTH_SURCHARGE_LIMIT}"
+        )
+
+    # NEW: 普通超长的体积规则展示
+    if volume_value > VOLUME_SURCHARGE_LIMIT:
+        st.write(
+            f"❌ 三边体积："
+            f"{a} × {b} × {h} = {volume_value} > {VOLUME_SURCHARGE_LIMIT}"
+            f" → 触发超长费 {long_fee} 美金"
+        )
+    else:
+        st.write(
+            f"✅ 三边体积："
+            f"{a} × {b} × {h} = {volume_value} ≤ {VOLUME_SURCHARGE_LIMIT}"
+        )
+
+    # ===== Oversize规则检查 =====
+
+    st.write("#### 🚨 Oversize规则检查")
+
+    if a > OVERSIZE_SIDE_LIMIT:
+        st.write(
+            f"❌ 最长边 = {a} inch > {OVERSIZE_SIDE_LIMIT} inch"
+            f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
+        )
+    else:
+        st.write(
+            f"✅ 最长边 = {a} inch ≤ {OVERSIZE_SIDE_LIMIT} inch"
+        )
+
+    if girth_value > OVERSIZE_GIRTH_LIMIT:
+        st.write(
+            f"❌ 最长边+横截面周长："
+            f"{a} + 2 × ({b} + {h}) = {girth_value} > {OVERSIZE_GIRTH_LIMIT}"
+            f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
+        )
+    else:
+        st.write(
+            f"✅ 最长边+横截面周长："
+            f"{a} + 2 × ({b} + {h}) = {girth_value} ≤ {OVERSIZE_GIRTH_LIMIT}"
+        )
+
+    # NEW: Oversize 实际重量规则展示
+    if actual_weight_lbs is not None:
+        if actual_weight_lbs > OVERSIZE_WEIGHT_LIMIT:
+            st.write(
+                f"❌ 实际重量 = {actual_weight_lbs} lbs > {OVERSIZE_WEIGHT_LIMIT} lbs"
+                f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
+            )
+        else:
+            st.write(
+                f"✅ 实际重量 = {actual_weight_lbs} lbs ≤ {OVERSIZE_WEIGHT_LIMIT} lbs"
+            )
+    else:
+        st.write(
+            f"⚠️ 未填写实际重量，暂不判断实际重量 >= {OVERSIZE_WEIGHT_LIMIT} lbs 的 Oversize规则"
+        )
+
+    if volume_value > OVERSIZE_VOLUME_LIMIT:
+        st.write(
+            f"❌ 三边体积："
+            f"{a} × {b} × {h} = {volume_value} > {OVERSIZE_VOLUME_LIMIT}"
+            f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
+        )
+    else:
+        st.write(
+            f"✅ 三边体积："
+            f"{a} × {b} × {h} = {volume_value} ≤ {OVERSIZE_VOLUME_LIMIT}"
         )
 
     # ===== 最终收取的超长费用 =====
@@ -299,6 +396,13 @@ def calculate_shipping_fee(
         )
     else:
         st.write("最终收取：超长相关费用 = 0 美金")
+
+    # NEW: 未填写实际重量时，在最终输出附近提醒费用可能偏低
+    if actual_weight_lbs is None:
+        st.warning(
+            f"⚠️ 未填写实际重量，系统未检查『实际重量 >= {OVERSIZE_WEIGHT_LIMIT} lbs 收 Oversize超长费』规则，"
+            "最终费用可能偏低。"
+        )
 
     # ===== 额外费用总额 =====
 

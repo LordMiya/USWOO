@@ -29,7 +29,7 @@ SMALL_BOX_WEIGHT_LIMIT = 35
 
 # ===== 单边超长阈值(inch) =====
 LONGEST_SIDE_LIMIT = 48
-SECOND_LONGEST_SIDE_LIMIT = 28
+SECOND_LONGEST_SIDE_LIMIT = 30
 
 
 # ===== girth 阈值 最长边+横截面周长 (inch) =====

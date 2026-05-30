@@ -309,26 +309,26 @@ def calculate_shipping_fee(
     if girth_value >= GIRTH_SURCHARGE_LIMIT:
         st.write(
             f"❌ 最长边+横截面周长："
-            f"{a} + 2 × ({b} + {h}) = {girth_value} inch ≥ {GIRTH_SURCHARGE_LIMIT}"
+            f"{a} + 2 × ({b} + {h}) = {girth_value} inch ≥ {GIRTH_SURCHARGE_LIMIT} inch"
             f" → 触发超长费 {long_fee} 美金"
         )
     else:
         st.write(
             f"✅ 最长边+横截面周长："
-            f"{a} + 2 × ({b} + {h}) = {girth_value} inch < {GIRTH_SURCHARGE_LIMIT}"
+            f"{a} + 2 × ({b} + {h}) = {girth_value} inch < {GIRTH_SURCHARGE_LIMIT} inch"
         )
 
     # NEW: 普通超长的体积规则展示
     if volume_value >= VOLUME_SURCHARGE_LIMIT:
         st.write(
             f"❌ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ ≥ {VOLUME_SURCHARGE_LIMIT}"
+            f"{a} × {b} × {h} = {volume_value} inch³ ≥ {VOLUME_SURCHARGE_LIMIT} inch³"
             f" → 触发超长费 {long_fee} 美金"
         )
     else:
         st.write(
             f"✅ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ < {VOLUME_SURCHARGE_LIMIT}"
+            f"{a} × {b} × {h} = {volume_value} inch³ < {VOLUME_SURCHARGE_LIMIT} inch³"
         )
 
     # ===== Oversize规则检查 =====
@@ -354,7 +354,7 @@ def calculate_shipping_fee(
     else:
         st.write(
             f"✅ 最长边+横截面周长："
-            f"{a} + 2 × ({b} + {h}) = {girth_value} < {OVERSIZE_GIRTH_LIMIT}"
+            f"{a} + 2 × ({b} + {h}) = {girth_value} < {OVERSIZE_GIRTH_LIMIT} inch"
         )
 
     # NEW: Oversize 实际重量规则展示
@@ -376,13 +376,13 @@ def calculate_shipping_fee(
     if volume_value >= OVERSIZE_VOLUME_LIMIT:
         st.write(
             f"❌ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ ≥ {OVERSIZE_VOLUME_LIMIT}"
+            f"{a} × {b} × {h} = {volume_value} inch³ ≥ {OVERSIZE_VOLUME_LIMIT} inch³"
             f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
         )
     else:
         st.write(
             f"✅ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ < {OVERSIZE_VOLUME_LIMIT}"
+            f"{a} × {b} × {h} = {volume_value} inch³ < {OVERSIZE_VOLUME_LIMIT} inch³"
         )
 
     # ===== 最终收取的超长费用 =====

@@ -200,7 +200,7 @@ def calculate_shipping_fee(
     girth_value = a + 2 * (b + h)
 
     # NEW: 三边体积规则
-    volume_value = a * b * h
+    cubic_inches = a * b * h
 
     # NEW: Oversize 重量规则只看“实际重量”，不看体积重
     actual_weight_oversize = (
@@ -216,10 +216,10 @@ def calculate_shipping_fee(
     # 3. 实际重量 >= 110 lbs
     # 4. 三边体积 >= 17280
     if (
-        a > OVERSIZE_SIDE_LIMIT
+        a >= OVERSIZE_SIDE_LIMIT
         or girth_value >= OVERSIZE_GIRTH_LIMIT
         or actual_weight_oversize
-        or volume_value >= OVERSIZE_VOLUME_LIMIT
+        or cubic_inches >= OVERSIZE_VOLUME_LIMIT
     ):
         size_fee = OVERSIZE_FEE
         size_fee_name = "Oversize超长费"
@@ -243,7 +243,7 @@ def calculate_shipping_fee(
         size_fee = long_fee
         size_fee_name = "超长费"
 
-    elif volume_value >= VOLUME_SURCHARGE_LIMIT:
+    elif cubic_inches >= VOLUME_SURCHARGE_LIMIT:
         size_fee = long_fee
         size_fee_name = "超长费"
 
@@ -319,16 +319,16 @@ def calculate_shipping_fee(
         )
 
     # NEW: 普通超长的体积规则展示
-    if volume_value >= VOLUME_SURCHARGE_LIMIT:
+    if cubic_inches >= VOLUME_SURCHARGE_LIMIT:
         st.write(
             f"❌ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ ≥ {VOLUME_SURCHARGE_LIMIT} inch³"
+            f"{a} × {b} × {h} = {cubic_inches} inch³ ≥ {VOLUME_SURCHARGE_LIMIT} inch³"
             f" → 触发超长费 {long_fee} 美金"
         )
     else:
         st.write(
             f"✅ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ < {VOLUME_SURCHARGE_LIMIT} inch³"
+            f"{a} × {b} × {h} = {cubic_inches} inch³ < {VOLUME_SURCHARGE_LIMIT} inch³"
         )
 
     # ===== Oversize规则检查 =====
@@ -373,16 +373,16 @@ def calculate_shipping_fee(
             f"⚠️ 未填写实际重量，暂不判断实际重量 >= {OVERSIZE_WEIGHT_LIMIT} lbs 的 Oversize规则"
         )
 
-    if volume_value >= OVERSIZE_VOLUME_LIMIT:
+    if cubic_inches >= OVERSIZE_VOLUME_LIMIT:
         st.write(
             f"❌ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ ≥ {OVERSIZE_VOLUME_LIMIT} inch³"
+            f"{a} × {b} × {h} = {cubic_inches} inch³ ≥ {OVERSIZE_VOLUME_LIMIT} inch³"
             f" → 触发 Oversize超长费 {OVERSIZE_FEE} 美金"
         )
     else:
         st.write(
             f"✅ 三边体积："
-            f"{a} × {b} × {h} = {volume_value} inch³ < {OVERSIZE_VOLUME_LIMIT} inch³"
+            f"{a} × {b} × {h} = {cubic_inches} inch³ < {OVERSIZE_VOLUME_LIMIT} inch³"
         )
 
     # ===== 最终收取的超长费用 =====

@@ -599,6 +599,14 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 
 with tab1:
 
+
+    def clear_tab1_inputs():
+        st.session_state["tab1_length"] = ""
+        st.session_state["tab1_width"] = ""
+        st.session_state["tab1_height"] = ""
+        st.session_state["tab1_actual_weight_input"] = ""
+        st.session_state["tab1_base_price_input"] = ""
+
     st.title("自主蛙的费用计算器")
 
     st.write("")
@@ -653,7 +661,24 @@ with tab1:
 
     st.divider()
 
-    if st.button("计算费用", key="tab1_calculate_button"):
+    col1, col2 = st.columns(2)
+
+    with col1:
+        calculate_clicked = st.button(
+            "计算费用",
+            key="tab1_calculate_button",
+            use_container_width=True
+        )
+
+    with col2:
+        st.button(
+            "一键清空",
+            key="tab1_clear_button",
+            on_click=clear_tab1_inputs,
+            use_container_width=True
+        )
+
+    if calculate_clicked:
 
         try:
 

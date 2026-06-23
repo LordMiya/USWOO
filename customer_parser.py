@@ -66,7 +66,6 @@ def extract_field_after_keywords(text, keywords):
     邮箱
     abc@qq.com
     """
-
     if not text:
         return None
 
@@ -77,15 +76,11 @@ def extract_field_after_keywords(text, keywords):
         for keyword in keywords:
             if keyword in line:
                 value = line.split(keyword, 1)[-1]
-
-                # 去掉冒号、空格、中文冒号
                 value = re.sub(r"^[：:\s]+", "", value).strip()
 
-                # 情况1：内容在同一行
                 if value:
                     return value
 
-                # 情况2：内容在下一行
                 if i + 1 < len(lines):
                     return lines[i + 1].strip()
 
@@ -101,7 +96,7 @@ SURNAME_PINYIN_FIX = {
 }
 
 
-def extract_recipient_name(text):
+def extract_recipient_name_cn(text):
     """
     提取收件人中文姓名。
     支持：
@@ -111,7 +106,6 @@ def extract_recipient_name(text):
     4. 只提供中文姓名
     5. 中文名 + 英文名
     """
-
     if not text:
         return None
 
@@ -161,6 +155,7 @@ def extract_recipient_name(text):
                     break
 
                 next_value = next_line
+
                 for noise in noise_words:
                     next_value = next_value.replace(noise, " ")
 
@@ -173,8 +168,7 @@ def extract_recipient_name(text):
     return None
 
 
-
-def chinese_name_to_pinyin(name_cn):
+def convert_cn_name_to_pinyin(name_cn):
     """
     中文姓名转英文拼音。
     格式：Given Name + Family Name
@@ -200,12 +194,11 @@ def chinese_name_to_pinyin(name_cn):
     return f"{given_name} {family_name}"
 
 
-
 # =========================
 # 电话 / 邮箱 / 邮编
 # =========================
 
-def extract_phone(text):
+def extract_cn_phone(text):
     """
     提取中国手机号。
     +86 15868155998 -> 15868155998
@@ -231,7 +224,6 @@ def extract_us_phone(text):
     提取美国电话。
     只识别美国电话/取件电话相关字段，避免误抓中国手机号。
     """
-
     if not text:
         return None
 
@@ -279,7 +271,7 @@ def extract_email(text):
     return None
 
 
-def extract_postal_code(text):
+def extract_cn_postal_code(text):
     """
     提取中国6位邮编。
     """
@@ -295,14 +287,13 @@ def extract_postal_code(text):
 
 
 # =========================
-# 中国地址
+# 地址
 # =========================
 
-def extract_chinese_address(text):
+def extract_cn_address(text):
     """
     只提取中国地址，避免抓到美国取件地址。
     """
-
     if not text:
         return None
 
@@ -358,7 +349,6 @@ def extract_chinese_address(text):
     return None
 
 
-
 def extract_us_address(text):
     """
     提取美国取件地址。
@@ -367,12 +357,10 @@ def extract_us_address(text):
     Unit 648, 17600 Cartwright Rd
     Irvine, CA 92614
     """
-
     if not text:
         return None
 
     text = clean_text(text)
-
     lines = [line.strip() for line in text.split("\n") if line.strip()]
 
     address_keywords = [
@@ -394,20 +382,16 @@ def extract_us_address(text):
     ]
 
     for i, line in enumerate(lines):
-
         if any(keyword in line for keyword in address_keywords):
 
             collected = []
 
-            # 同行内容
             value = re.split(r"[：:]", line, maxsplit=1)[-1].strip()
 
             if value != line:
                 collected.append(value)
 
-            # 后续行
             for next_line in lines[i + 1:]:
-
                 if any(stop in next_line for stop in stop_keywords):
                     break
 
@@ -423,7 +407,7 @@ def extract_us_address(text):
 # 路线 / 箱型
 # =========================
 
-def extract_route(text):
+def extract_shipping_route(text):
     """
     识别路线：
     国际
@@ -446,7 +430,6 @@ def extract_route(text):
     return None
 
 
-
 def extract_box_counts(text):
     """
     提取箱子数量。
@@ -454,24 +437,97 @@ def extract_box_counts(text):
     国际4大2中1小
     国际四大二中一小
     代3大
+    2 large box 国际
+    large box * 2
+    大箱*2，小箱*1
+    2个大箱，1个小箱
     """
-    text = normalize_box_text(text)
+
+    text = normalize_box_text(text).lower()
 
     large = 0
     medium = 0
     small = 0
 
-    m = re.search(r"(\d+)大", text)
+    # =========================
+    # 中文简写：2大 / 2中 / 1小
+    # =========================
+
+    m = re.search(r"(\d+)\s*大", text)
     if m:
         large = int(m.group(1))
 
-    m = re.search(r"(\d+)中", text)
+    m = re.search(r"(\d+)\s*中", text)
     if m:
         medium = int(m.group(1))
 
-    m = re.search(r"(\d+)小", text)
+    m = re.search(r"(\d+)\s*小", text)
     if m:
         small = int(m.group(1))
+
+    # =========================
+    # 中文完整：2个大箱 / 2大箱
+    # =========================
+
+    m = re.search(r"(\d+)\s*个?\s*大箱", text)
+    if m:
+        large = int(m.group(1))
+
+    m = re.search(r"(\d+)\s*个?\s*中箱", text)
+    if m:
+        medium = int(m.group(1))
+
+    m = re.search(r"(\d+)\s*个?\s*小箱", text)
+    if m:
+        small = int(m.group(1))
+
+    # =========================
+    # 中文反向：大箱*2 / 大箱x2 / 大箱×2
+    # =========================
+
+    m = re.search(r"大箱\s*[*x×]?\s*(\d+)", text)
+    if m:
+        large = int(m.group(1))
+
+    m = re.search(r"中箱\s*[*x×]?\s*(\d+)", text)
+    if m:
+        medium = int(m.group(1))
+
+    m = re.search(r"小箱\s*[*x×]?\s*(\d+)", text)
+    if m:
+        small = int(m.group(1))
+
+    # =========================
+    # 英文正向：2 large box / 2 medium boxes
+    # =========================
+
+    m = re.search(r"(\d+)\s*(large|big)\s*(box|boxes)?", text)
+    if m:
+        large = int(m.group(1))
+
+    m = re.search(r"(\d+)\s*(medium|middle)\s*(box|boxes)?", text)
+    if m:
+        medium = int(m.group(1))
+
+    m = re.search(r"(\d+)\s*small\s*(box|boxes)?", text)
+    if m:
+        small = int(m.group(1))
+
+    # =========================
+    # 英文反向：large box * 2 / small box x1
+    # =========================
+
+    m = re.search(r"(large|big)\s*(box|boxes)?\s*[*x×]?\s*(\d+)", text)
+    if m:
+        large = int(m.group(3))
+
+    m = re.search(r"(medium|middle)\s*(box|boxes)?\s*[*x×]?\s*(\d+)", text)
+    if m:
+        medium = int(m.group(3))
+
+    m = re.search(r"small\s*(box|boxes)?\s*[*x×]?\s*(\d+)", text)
+    if m:
+        small = int(m.group(2))
 
     return {
         "large": large,
@@ -480,7 +536,7 @@ def extract_box_counts(text):
     }
 
 
-def build_box_string(box_counts):
+def build_box_summary(box_counts):
     """
     {'large': 3, 'medium': 2, 'small': 1}
     -> 3大2中1小
@@ -499,23 +555,23 @@ def build_box_string(box_counts):
     return "".join(parts)
 
 
-def build_route_box_summary(text):
+def build_route_summary(text):
     """
     国际四大二中一小
     -> 国际4大2中1小
     """
-    route = extract_route(text)
+    route = extract_shipping_route(text)
     box_counts = extract_box_counts(text)
-    box_string = build_box_string(box_counts)
+    box_summary = build_box_summary(box_counts)
 
-    if route and box_string:
-        return f"{route}{box_string}"
+    if route and box_summary:
+        return f"{route}{box_summary}"
 
     if route:
         return route
 
-    if box_string:
-        return box_string
+    if box_summary:
+        return box_summary
 
     return None
 
@@ -532,7 +588,6 @@ def generate_reference(name_en, route=None):
     代清关:
     thunder-ca-jiayiruan
     """
-
     if not name_en:
         return None
 
@@ -542,11 +597,9 @@ def generate_reference(name_en, route=None):
         .replace(" ", "")
     )
 
-    # 代清关
     if route == "代清关":
         return f"thunder-ca-{name_part}"
 
-    # 国际
     ny_time = datetime.now(
         ZoneInfo("America/New_York")
     )
@@ -556,7 +609,7 @@ def generate_reference(name_en, route=None):
     return f"thunder-{mmdd}-{name_part}"
 
 
-def generate_shipment_filename(name_en, route, box_string):
+def generate_shipment_filename(name_en, route, box_summary):
     """
     Jiawen Zou + 国际 + 3大2中1小
     -> jiawenzou-国际3大2中1小
@@ -573,74 +626,20 @@ def generate_shipment_filename(name_en, route, box_string):
     if not route:
         return f"{name_part}-cannot complete - missing shipping route"
 
-    if not box_string:
+    if not box_summary:
         return f"{name_part}-cannot complete - missing box quantity / box size"
 
-    return f"{name_part}-{route}{box_string}"
+    return f"{name_part}-{route}{box_summary}"
 
 
 # =========================
-# 主 Parser
+# Missing / Unclear
 # =========================
-
-def parse_customer_info(text):
-    """
-    输入客户原始信息，输出结构化字段。
-    """
-
-    result = {}
-
-    result["name_cn"] = extract_recipient_name(text)
-
-    result["name_en"] = (
-        chinese_name_to_pinyin(result["name_cn"])
-        if result["name_cn"]
-        else None
-    )
-
-    result["phone_us"] = extract_us_phone(text)
-
-    result["address_us"] = extract_us_address(text)
-
-    result["phone_cn"] = extract_phone(text)
-
-    result["postal_code_cn"] = extract_postal_code(text)
-
-    result["address_cn"] = extract_chinese_address(text)
-
-    result["email"] = extract_email(text)
-
-    result["route"] = extract_route(text)
-
-    result["box_counts"] = extract_box_counts(text)
-
-    result["box_string"] = build_box_string(
-        result["box_counts"]
-    )
-
-    result["route_box"] = build_route_box_summary(text)
-
-    result["reference"] = generate_reference(
-        result["name_en"],
-        result["route"]
-    )
-    result["shipment_filename"] = generate_shipment_filename(
-        result["name_en"],
-        result["route"],
-        result["box_string"]
-    )
-    result["missing_or_unclear"] = validate_customer_info(result)
-
-    return result
-
-
-
 
 def validate_customer_info(result):
     """
     总结缺失信息 / 错误信息
     """
-
     issues = []
 
     if not result.get("name_cn"):
@@ -668,10 +667,66 @@ def validate_customer_info(result):
     if not result.get("route"):
         issues.append("线路 missing")
 
-    if not result.get("box_string"):
+    if not result.get("box_summary"):
         issues.append("箱子数量/尺寸 missing")
 
-    return issues if issues else None
+    return issues
+
+
+# =========================
+# 主 Parser
+# =========================
+
+def parse_customer_info(text):
+    """
+    输入客户原始信息，输出结构化字段。
+    """
+    result = {}
+
+    result["name_cn"] = extract_recipient_name_cn(text)
+
+    result["name_en"] = (
+        convert_cn_name_to_pinyin(result["name_cn"])
+        if result["name_cn"]
+        else None
+    )
+
+    result["phone_us"] = extract_us_phone(text)
+
+    result["address_us"] = extract_us_address(text)
+
+    result["phone_cn"] = extract_cn_phone(text)
+
+    result["postal_code_cn"] = extract_cn_postal_code(text)
+
+    result["address_cn"] = extract_cn_address(text)
+
+    result["email"] = extract_email(text)
+
+    result["route"] = extract_shipping_route(text)
+
+    result["box_counts"] = extract_box_counts(text)
+
+    result["box_summary"] = build_box_summary(
+        result["box_counts"]
+    )
+
+    result["route_summary"] = build_route_summary(text)
+
+    result["reference"] = generate_reference(
+        result["name_en"],
+        result["route"]
+    )
+
+    result["shipment_filename"] = generate_shipment_filename(
+        result["name_en"],
+        result["route"],
+        result["box_summary"]
+    )
+
+    result["missing_or_unclear"] = validate_customer_info(result)
+
+    return result
 
 
 # =========================
@@ -704,3 +759,29 @@ Unit 648, 17600 Cartwright rd, Irvine, Ca, 92614
 
     for k, v in result.items():
         print(f"{k}: {v}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+# tests = [
+#     "国际2大",
+#     "国际四大二中一小",
+#     "2 large box 国际",
+#     "large box * 2 国际",
+#     "大箱*2，小箱*1 国际",
+#     "2个大箱，1个小箱 国际",
+#     "medium box x3 代清关",
+# ]
+
+# for t in tests:
+#     counts = extract_box_counts(t)
+#     print(t, "->", counts, "->", build_box_summary(counts))

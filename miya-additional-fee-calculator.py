@@ -2,11 +2,15 @@
 # coding: utf-8
 
 
-
-
+import re
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from pypinyin import lazy_pinyin
 import math
 import streamlit as st
 import pandas as pd
+
+from customer_parser import parse_customer_info
 
 
 
@@ -275,8 +279,8 @@ def calculate_shipping_fee(
         parts.append(f"{overweight_fee:g}（超重费）")
 
         st.write(
-            f"超重费：({billable_weight}-{weight_limit}) × "
-            f"{overweight_rate} + {penalty} = "
+            f"超重费：({billable_weight} - {weight_limit}) × "
+            f"{overweight_rate:g} + {penalty:g} = "
             f"{overweight_fee:g} 美金"
         )
     else:
@@ -389,7 +393,7 @@ def calculate_shipping_fee(
     # 注意：超长费用只取最高优先级，不重复叠加
 
     if size_fee > 0:
-        parts.append(f"{size_fee:g}({size_fee_name})")
+        parts.append(f"{size_fee:g}（{size_fee_name}）")
 
         st.write(
             f"最终收取：{size_fee_name} = {size_fee:g} 美金"
@@ -584,13 +588,14 @@ def check_china_fedex_oda(postal_code, china_df):
 
 
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6,tab7 = st.tabs([
     "自主清关",
     "代清关",
     "境内行李",
     "尺寸/重量换算",
     "FedEx邮编查询构思",
-    "中国邮编查询"
+    "中国邮编查询",
+    "客户信息解析"
 ])
 
 # =====================================================================
@@ -606,6 +611,8 @@ with tab1:
         st.session_state["tab1_height"] = ""
         st.session_state["tab1_actual_weight_input"] = ""
         st.session_state["tab1_base_price_input"] = ""
+
+
 
     st.title("自主蛙的费用计算器")
 
@@ -1209,6 +1216,28 @@ with tab6:
 
 
 
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# =====================================================================
+# TAB 7 客户信息解析
+# =====================================================================
+
+with tab7:
+
+    st.title("📦 Customer Information Parser (Beta)")
+    st.caption("Automatically extract customer information from shipping forms")
+
+    raw_text = st.text_area(
+        "Paste customer information",
+        height=400
+    )
+
+    if st.button("Parse Customer Information"):
+
+        result = parse_customer_info(raw_text)
+
+        st.json(result)
 
 
 

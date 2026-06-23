@@ -1233,7 +1233,7 @@ with tab7:
         height=500
     )
 
-    if st.button("Parse Customer Information"):
+    if st.button("创建运单"):
 
         result = parse_customer_info(raw_text)
 
@@ -1264,7 +1264,7 @@ with tab7:
         st.code(result.get("postal_code_cn") or "", language=None)
 
         st.markdown("**8. Package Count & Weight:**")
-        st.code(f"{box_total} boxes; Weight: {total_weight} lb", language=None)
+        st.code(f"{box_total} boxes; {total_weight} lbs", language=None)
 
         st.markdown("**9. Shipment Reference:**")
         st.code(result.get("reference") or "", language=None)

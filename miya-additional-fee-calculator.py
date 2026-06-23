@@ -1226,18 +1226,55 @@ with tab6:
 with tab7:
 
     st.title("📦 Customer Information Parser (Beta)")
-    st.caption("Automatically extract customer information from shipping forms")
+    st.caption("Task Automation 脑死亡复制粘贴")
 
     raw_text = st.text_area(
-        "Paste customer information",
-        height=400
+        "粘贴客户信息",
+        height=500
     )
 
     if st.button("Parse Customer Information"):
 
         result = parse_customer_info(raw_text)
 
-        st.json(result)
+        box_total = sum(result["box_counts"].values())
+        total_weight = box_total * 30
+
+        st.subheader("FedEx Shipment Fields")
+
+        st.markdown("**1. Customer Name:**")
+        st.code(result.get("name_en") or "", language=None)
+
+        st.markdown("**2. Phone Number:**")
+        st.code(result.get("phone_cn") or "", language=None)
+
+        st.markdown("**3. Email:**")
+        st.code(result.get("email") or "", language=None)
+
+        st.markdown("**4. Address Line 1:**")
+        st.code("", language=None)
+
+        st.markdown("**5. Address Line 2:**")
+        st.code("", language=None)
+
+        st.markdown("**6. Address Line 3:**")
+        st.code("", language=None)
+
+        st.markdown("**7. Postal Code:**")
+        st.code(result.get("postal_code_cn") or "", language=None)
+
+        st.markdown("**8. Package Count & Weight:**")
+        st.code(f"{box_total} boxes; Weight: {total_weight} lb", language=None)
+
+        st.markdown("**9. Shipment Reference:**")
+        st.code(result.get("reference") or "", language=None)
+
+        st.markdown("**10. Shipment File Name:**")
+        st.code(result.get("shipment_filename") or "", language=None)
+
+        if result.get("missing_or_unclear"):
+            st.warning("Missing / Unclear Information:")
+            st.write(result["missing_or_unclear"])
 
 
 
